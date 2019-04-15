@@ -1,0 +1,149 @@
+* plog - pico log for go
+
+pico log - because it's so small and has no dependencies (only from go's stdlib).
+
+** Why?
+
+I want a logging library with
+
+  - zero dependencies
+  - can emit log messages per chan
+  - easy to use
+  - TODO: abstract over other loggers
+
+*** Non Goals
+
+  - blazing fast
+  - a lot of features
+
+** Examples
+
+*** console logging (`go run examples/console.go`)
+
+Simple console logging
+
+ #+BEGIN_SRC go :tangle examples/console.go
+   package main
+
+   import  "github.com/j-keck/plog"
+
+   func main() {
+       log := plog.NewConsoleLogger()
+
+       log.Info("startup - version: 0.1")
+       log.Debug("change to debug level")
+       log.SetLevel(plog.Debug)
+       log.Debug("level changed")
+   }
+ #+END_SRC
+
+#+BEGIN_SRC shell :results output :exports both
+go run examples/console.go
+#+END_SRC
+
+#+RESULTS:
+:  INFO | 15.04 10:08:13.027 |              console:8   | startup - version: 0.1
+: DEBUG | 15.04 10:08:13.027 |              console:11  | level changed
+
+
+
+*** console and chan logging (`go run examples/console_chan.go`)
+
+Console logging with log messages multiplexing
+
+#+BEGIN_SRC go :tangle examples/console_chan.go
+  package main
+
+  import "time"
+  import "fmt"
+  import "github.com/j-keck/plog"
+
+  func main() {
+      log := plog.NewConsoleLogger()
+      defer log.WaitForSubscribers(1 * time.Second)
+
+      go func() {
+          msgC := log.Subscribe(10)
+          for {
+              msg := <- msgC
+              fmt.Printf("level: %s, time: %s, message: %s\n",
+                  msg.Level, msg.Timestamp.Format("15:04:05"), msg.Message)
+          }
+      }()
+      log.Info("startup - version: 0.1")
+      time.Sleep(10 * time.Millisecond)
+
+      log.Debug("change to debug level")
+      log.SetLevel(plog.Debug)
+      log.Debug("level changed")
+
+      // wait for the go routine above to consume the message
+      time.Sleep(100 * time.Millisecond)
+  }
+#+END_SRC
+
+#+BEGIN_SRC shell :results output :exports both
+go run examples/console_chan.go
+#+END_SRC
+
+#+RESULTS:
+:  INFO | 15.04 10:08:18.121 |         console_chan:19  | startup - version: 0.1
+: level:  INFO, time: 10:08:18, message: startup - version: 0.1
+: DEBUG | 15.04 10:08:18.132 |         console_chan:24  | level changed
+: level: DEBUG, time: 10:08:18, message: level changed
+
+
+*** flags (`go run examples/flag.go`)
+
+Log level per flag
+
+#+BEGIN_SRC go :tangle examples/flag.go
+  package main
+
+  import "github.com/j-keck/plog"
+  import "flag"
+
+
+  func main() {
+      log := plog.NewConsoleLogger()
+
+      logLevel := plog.Info
+      plog.FlagDebugVar(&logLevel,  "v", "debug")
+      plog.FlagTraceVar(&logLevel, "vv", "trace")
+      flag.Parse()
+
+      log.SetLevel(logLevel)
+
+      log.Info("info")
+      log.Debug("debug")
+      log.Trace("trace")
+  }
+#+END_SRC
+
+#+BEGIN_SRC shell :results output :exports both
+run() { echo $(repeat 80 printf -); echo $@; $@; echo}
+
+run go run examples/flag.go
+run go run examples/flag.go -v
+run go run examples/flag.go -vv
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+--------------------------------------------------------------------------------
+go run examples/flag.go
+ INFO | 15.04 10:08:22.536 |                 flag:17  | info
+
+--------------------------------------------------------------------------------
+go run examples/flag.go -v
+ INFO | 15.04 10:08:22.882 |                 flag:17  | info
+DEBUG | 15.04 10:08:22.882 |                 flag:18  | debug
+
+--------------------------------------------------------------------------------
+go run examples/flag.go -vv
+ INFO | 15.04 10:08:23.219 |                 flag:17  | info
+DEBUG | 15.04 10:08:23.219 |                 flag:18  | debug
+TRACE | 15.04 10:08:23.219 |                 flag:19  | trace
+
+#+end_example
+
