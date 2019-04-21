@@ -3,15 +3,18 @@ package plog
 import (
 	"fmt"
 	"os"
+	"io"
 )
 
 type consoleLogger struct {
 	logger
+	stdout io.Writer
+	stderr io.Writer
 }
 
 // NewConsoleLogger creates a new logger, where the log messages
 // are emitted to the console
-func NewConsoleLogger() Logger {
+func NewConsoleLogger() *consoleLogger {
 	self := new(consoleLogger)
 	self.SetLevel(Info)
 	self.SetStdout(os.Stdout)
@@ -22,6 +25,17 @@ func NewConsoleLogger() Logger {
 
 	return self
 }
+
+// SetStdout to overwrite 'stdout'
+func (self *consoleLogger) SetStdout(w io.Writer) {
+	self.stdout = w
+}
+
+// SetStderr to overwrite 'stderr'
+func (self *consoleLogger) SetStderr(w io.Writer) {
+	self.stderr = w
+}
+
 
 func (self *consoleLogger) log(msg LogMessage) {
 	if msg.Level < self.level {
