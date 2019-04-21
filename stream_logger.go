@@ -57,6 +57,7 @@ func (self *streamLogger) WaitForSubscribers(timeout time.Duration) {
 			}
 
 			if len(c) == 0 {
+				close(c)
 				break
 			}
 
