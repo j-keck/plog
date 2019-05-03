@@ -6,17 +6,18 @@ import "time"
 
 func main() {
     log := plog.NewStreamLogger()
-
-    go func() {
-        logC := log.Subscribe(10)
-        for {
-            msg := <- logC
-            fmt.Printf("level: %s, message: %s\n",
-                msg.Level, msg.Message)
-        }
-    }()
+    logC := log.Subscribe(10)
 
     log.Info("startup")
-    log.Info("shutdown")
+    log.Debug("change to debug level")
+    log.SetLevel(plog.Debug)
+    log.Debug("level changed")
+
+    go func() {
+      for msg := range logC {
+        fmt.Printf("%s: %s\n", msg.Level, msg.Message)
+      }
+    }()
+
     log.WaitForSubscribers(100 * time.Millisecond)
 }

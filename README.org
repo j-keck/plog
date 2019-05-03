@@ -30,7 +30,7 @@ Simple console logging
    func main() {
        log := plog.NewConsoleLogger()
 
-       log.Info("startup - version: 0.1")
+       log.Info("startup")
        log.Debug("change to debug level")
        log.SetLevel(plog.Debug)
        log.Debug("level changed")
@@ -45,7 +45,6 @@ go run examples/console.go
 :  INFO | 21.04 11:22:39.952 |              console:8   | startup - version: 0.1
 : DEBUG | 21.04 11:22:39.953 |              console:11  | level changed
 
-
 *** log stream
 
 log stream per go chan
@@ -59,18 +58,19 @@ log stream per go chan
 
   func main() {
       log := plog.NewStreamLogger()
-
-      go func() {
-          logC := log.Subscribe(10)
-          for {
-              msg := <- logC
-              fmt.Printf("level: %s, message: %s\n",
-                  msg.Level, msg.Message)
-          }
-      }()
+      logC := log.Subscribe(10)
 
       log.Info("startup")
-      log.Info("shutdown")
+      log.Debug("change to debug level")
+      log.SetLevel(plog.Debug)
+      log.Debug("level changed")
+
+      go func() {
+        for msg := range logC {
+          fmt.Printf("%s: %s\n", msg.Level, msg.Message)
+        }
+      }()
+
       log.WaitForSubscribers(100 * time.Millisecond)
   }
 #+END_SRC
@@ -80,10 +80,10 @@ go run examples/stream.go
 #+END_SRC
 
 #+RESULTS:
-: level:  INFO, message: startup
-: level:  INFO, message: ende
+:  INFO: startup
+: DEBUG: level changed
 
-*** flags (`go run examples/flag.go`)
+*** flags
 
 Log level per flag
 
@@ -137,3 +137,41 @@ TRACE | 21.04 11:23:05.617 |                 flag:19  | trace
 
 #+end_example
 
+
+*** broadcast
+
+Broadcast log messages to multiple receivers.
+
+To simplify the example, only console loggers are used,
+but you can also use stream loggers.
+
+#+BEGIN_SRC go :tangle examples/broadcast.go
+  package main
+
+  import "github.com/j-keck/plog"
+
+  func main() {
+      log := plog.NewBroadcastLogger(
+          plog.NewConsoleLogger(),
+          plog.NewConsoleLogger(),
+          plog.NewConsoleLogger(),
+      )
+
+      log.Info("startup")
+      log.Debug("change to debug level")
+      log.SetLevel(plog.Debug)
+      log.Debug("level changed")
+  }
+#+END_SRC
+
+#+BEGIN_SRC shell :results output :exports both
+go run examples/broadcast.go
+#+END_SRC
+
+#+RESULTS:
+:  INFO | 03.05 11:38:54.251 |            broadcast:12  | startup
+:  INFO | 03.05 11:38:54.251 |            broadcast:12  | startup
+:  INFO | 03.05 11:38:54.251 |            broadcast:12  | startup
+: DEBUG | 03.05 11:38:54.251 |            broadcast:15  | level changed
+: DEBUG | 03.05 11:38:54.251 |            broadcast:15  | level changed
+: DEBUG | 03.05 11:38:54.251 |            broadcast:15  | level changed
