@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// LogMessage represents a logging message
 type LogMessage struct {
 	Level     LogLevel
 	Timestamp time.Time

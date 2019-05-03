@@ -14,6 +14,9 @@ type streamLogger struct {
 	stderr      io.Writer
 }
 
+
+// NewStreamLogger creates a new logger, where the log messages
+// are emitted over a go chan. Use 'Subscribe(int)' get a go chan.
 func NewStreamLogger() *streamLogger {
 	self := new(streamLogger)
 	self.SetLevel(Info)
@@ -23,7 +26,6 @@ func NewStreamLogger() *streamLogger {
 
 	return self
 }
-
 
 // SetStderr to overwrite 'stderr'
 func (self *streamLogger) SetStderr(w io.Writer) {
@@ -37,21 +39,37 @@ func (self *streamLogger) Subscribe(bufferSize int) <-chan LogMessage {
 	return sub
 }
 
-func minDuration(a, b time.Duration) time.Duration {
-	if a < b {
-		return a
-	}
-	return b
-}
+// WaitForSubscribers waits till all consumers have received all
+// messages.
+//
+// Note: This function does NOT block until the consumers have
+//       PROCESSED the message (receiving != processing)
+//
+// TODO: should this return
+//   - an error on timeout
+//   - return some stats
 func (self *streamLogger) WaitForSubscribers(timeout time.Duration) {
+	minDuration := func (a, b time.Duration) time.Duration {
+		if a < b {
+			return a
+		}
+		return b
+	}
+
+
+	// check repeatedly if all consumers have received all messages.
 	for _, c := range self.subscribers {
 		const attempts = 10
-		checkDelay := minDuration(timeout / attempts, 500 * time.Millisecond)
+		checkDelay := minDuration(timeout / attempts, 100 * time.Millisecond)
 
 		for i := 0; ; i++ {
 			if i >= attempts {
-				timeoutMsg := fmt.Sprintf("plog.WaitForSubscribers timeout after %s - ignore Subscriber", timeout.String())
-				logMsg := newLogMessage(Warn, timeoutMsg)
+
+				logMsg := newLogMessage(
+					Warn,
+					fmt.Sprintf("plog.WaitForSubscribers timeout after %s - ignore Subscriber", timeout.String()),
+				)
+
 				fmt.Fprintln(self.stderr, logMsg.String())
 				break
 			}

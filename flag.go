@@ -5,6 +5,7 @@ import (
 	"strconv"
 )
 
+// debug level logging
 type flagDebugValue LogLevel
 
 func FlagDebugVar(p *LogLevel, name string, usage string) {
@@ -30,6 +31,8 @@ func (self *flagDebugValue) IsBoolFlag() bool {
 	return true
 }
 
+
+// trace level logging
 type flagTraceValue LogLevel
 
 func FlagTraceVar(p *LogLevel, name string, usage string) {
