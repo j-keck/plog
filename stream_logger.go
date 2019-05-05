@@ -19,11 +19,8 @@ type streamLogger struct {
 // are emitted over a go chan. Use 'Subscribe(int)' get a go chan.
 func NewStreamLogger() *streamLogger {
 	self := new(streamLogger)
-	self.SetLevel(Info)
+	initLogger(self)
 	self.SetStderr(os.Stderr)
-
-	self.logImpl = self
-
 	return self
 }
 

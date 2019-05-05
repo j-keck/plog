@@ -5,11 +5,12 @@ import (
 	"fmt"
 )
 
+
 // logger provides the basic functions of every logger.
 //
 // Each concrete logger implements his own 'log(LogMessage)' function.
 // The basic functions defined on this struct calls the underlying
-// 'log(LogMessage)' function.
+// 'log(LogMessage)' (abstracted over the 'logImpl' interface) function.
 type logger struct {
 	level       LogLevel
 	logImpl

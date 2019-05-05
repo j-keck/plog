@@ -1,6 +1,5 @@
 package plog
 
-
 type broadcastLogger struct {
 	receiver []Logger
 	logger
@@ -10,7 +9,7 @@ type broadcastLogger struct {
 // are forwarded to the given loggers.
 func NewBroadcastLogger(others ...Logger) *broadcastLogger {
 	self := new(broadcastLogger)
-	self.logImpl = self
+	initLogger(self)
 
 	for _, logger := range others {
 		self.Add(logger)

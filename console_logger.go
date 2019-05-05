@@ -16,13 +16,9 @@ type consoleLogger struct {
 // are emitted to the console
 func NewConsoleLogger() *consoleLogger {
 	self := new(consoleLogger)
-	self.SetLevel(Info)
+	initLogger(self)
 	self.SetStdout(os.Stdout)
 	self.SetStderr(os.Stderr)
-
-	// FIXME: remove this bad hack.
-	self.logImpl = self
-
 	return self
 }
 
