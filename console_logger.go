@@ -8,8 +8,9 @@ import (
 
 type consoleLogger struct {
 	logger
-	stdout io.Writer
-	stderr io.Writer
+    LogFormatter
+	stdout     io.Writer
+	stderr     io.Writer
 }
 
 // NewConsoleLogger creates a new logger, where the log messages
@@ -17,6 +18,7 @@ type consoleLogger struct {
 func NewConsoleLogger() *consoleLogger {
 	self := new(consoleLogger)
 	initLogger(self)
+	self.LogFormatter = NewDefaultLogFormatter()
 	self.SetStdout(os.Stdout)
 	self.SetStderr(os.Stderr)
 	return self
@@ -43,8 +45,5 @@ func (self *consoleLogger) log(msg LogMessage) {
 		out = self.stderr
 	}
 
-	ts := msg.Timestamp.Format("02.01 15:04:05.000")
-	logStr := fmt.Sprintf("%s | %s | %20s:%-3d | %s", msg.Level, ts, msg.File, msg.Line, msg.Message)
-
-	fmt.Fprintln(out, logStr)
+	fmt.Fprintln(out, self.Format(msg))
 }

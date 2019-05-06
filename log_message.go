@@ -1,11 +1,10 @@
 package plog
 
 import (
-	"fmt"
 	"path"
 	"runtime"
-	"strings"
 	"time"
+	"strings"
 )
 
 // LogMessage represents a logging message
@@ -17,8 +16,10 @@ type LogMessage struct {
 	Message   string
 }
 
+
 func (self *LogMessage) String() string {
-	return fmt.Sprintf("%s | %s", self.Level, self.Message)
+	formatter := NewLogFormatter(" | ", Level("%s"), Message("%s"))
+	return formatter.Format(*self)
 }
 
 func newLogMessage(level LogLevel, message string) LogMessage {

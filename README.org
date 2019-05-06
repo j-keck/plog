@@ -42,8 +42,9 @@ go run examples/console.go
 #+END_SRC
 
 #+RESULTS:
-:  INFO | 21.04 11:22:39.952 |              console:8   | startup - version: 0.1
-: DEBUG | 21.04 11:22:39.953 |              console:11  | level changed
+:  INFO | 06.05 10:08:45.169 |              console:8   | startup
+: DEBUG | 06.05 10:08:45.169 |              console:11  | level changed
+
 
 *** log stream
 
@@ -80,8 +81,9 @@ go run examples/stream.go
 #+END_SRC
 
 #+RESULTS:
-:  INFO: startup
+: INFO: startup
 : DEBUG: level changed
+
 
 *** flags
 
@@ -111,7 +113,7 @@ Log level per flag
 #+END_SRC
 
 #+BEGIN_SRC shell :results output :exports both
-run() { echo $(repeat 80 printf -); echo $@; $@; echo}
+run() { echo $(repeat 80 printf -); echo $@; $@; echo;}
 
 run go run examples/flag.go
 run go run examples/flag.go -v
@@ -120,20 +122,20 @@ run go run examples/flag.go -vv
 
 #+RESULTS:
 #+begin_example
---------------------------------------------------------------------------------
+
 go run examples/flag.go
- INFO | 21.04 11:23:04.946 |                 flag:17  | info
+ INFO | 06.05 10:08:57.578 |                 flag:17  | info
 
---------------------------------------------------------------------------------
+
 go run examples/flag.go -v
- INFO | 21.04 11:23:05.276 |                 flag:17  | info
-DEBUG | 21.04 11:23:05.277 |                 flag:18  | debug
+ INFO | 06.05 10:08:57.961 |                 flag:17  | info
+DEBUG | 06.05 10:08:57.962 |                 flag:18  | debug
 
---------------------------------------------------------------------------------
+
 go run examples/flag.go -vv
- INFO | 21.04 11:23:05.617 |                 flag:17  | info
-DEBUG | 21.04 11:23:05.617 |                 flag:18  | debug
-TRACE | 21.04 11:23:05.617 |                 flag:19  | trace
+ INFO | 06.05 10:08:58.308 |                 flag:17  | info
+DEBUG | 06.05 10:08:58.308 |                 flag:18  | debug
+TRACE | 06.05 10:08:58.308 |                 flag:19  | trace
 
 #+end_example
 
@@ -169,9 +171,41 @@ go run examples/broadcast.go
 #+END_SRC
 
 #+RESULTS:
-:  INFO | 03.05 11:38:54.251 |            broadcast:12  | startup
-:  INFO | 03.05 11:38:54.251 |            broadcast:12  | startup
-:  INFO | 03.05 11:38:54.251 |            broadcast:12  | startup
-: DEBUG | 03.05 11:38:54.251 |            broadcast:15  | level changed
-: DEBUG | 03.05 11:38:54.251 |            broadcast:15  | level changed
-: DEBUG | 03.05 11:38:54.251 |            broadcast:15  | level changed
+:  INFO | 06.05 10:09:03.649 |            broadcast:12  | startup
+:  INFO | 06.05 10:09:03.649 |            broadcast:12  | startup
+:  INFO | 06.05 10:09:03.649 |            broadcast:12  | startup
+: DEBUG | 06.05 10:09:03.649 |            broadcast:15  | level changed
+: DEBUG | 06.05 10:09:03.649 |            broadcast:15  | level changed
+: DEBUG | 06.05 10:09:03.649 |            broadcast:15  | level changed
+
+*** change log output
+
+#+BEGIN_SRC go :tangle examples/logformat.go
+  package main
+
+  import "github.com/j-keck/plog"
+
+
+  func main() {
+      log := plog.NewConsoleLogger()
+      log.SetLogFields(
+          plog.Level("%-5s"),
+          plog.Timestamp("Mon Jan 2 15:04:05"),
+          plog.Message("%s"),
+      ).SetLogSeparator(" - ")
+
+      log.Info("startup")
+      log.Debug("change to debug level")
+      log.SetLevel(plog.Debug)
+      log.Debug("level changed")
+  }
+#+END_SRC
+
+
+#+BEGIN_SRC shell :results output :exports both
+go run examples/logformat.go
+#+END_SRC
+
+#+RESULTS:
+: INFO  - Mon May 6 10:09:08 - startup
+: DEBUG - Mon May 6 10:09:08 - level changed
