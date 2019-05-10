@@ -2,14 +2,13 @@ package main
 
 import "github.com/j-keck/plog"
 
-
 func main() {
-    log := plog.NewConsoleLogger()
-    log.SetLogFields(
-        plog.Level("%-5s"),
-        plog.Timestamp("Mon Jan 2 15:04:05"),
-        plog.Message("%s"),
-    ).SetLogSeparator(" - ")
+    log := plog.NewConsoleLogger(" - ",
+        plog.TimestampFmt("2006-01-02T15:04:05Z07:00"),
+        plog.LevelFmt("(%-5s)"),
+        plog.Location,
+        plog.Message,
+    )
 
     log.Info("startup")
     log.Debug("change to debug level")

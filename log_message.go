@@ -3,8 +3,8 @@ package plog
 import (
 	"path"
 	"runtime"
-	"time"
 	"strings"
+	"time"
 )
 
 // LogMessage represents a logging message
@@ -16,9 +16,8 @@ type LogMessage struct {
 	Message   string
 }
 
-
 func (self *LogMessage) String() string {
-	formatter := NewLogFormatter(" | ", Level("%s"), Message("%s"))
+	formatter := NewLogFormatter(" | ", Level, Message)
 	return formatter.Format(*self)
 }
 

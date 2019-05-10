@@ -5,7 +5,7 @@ import "flag"
 
 
 func main() {
-    log := plog.NewConsoleLogger()
+    log := plog.NewDefaultConsoleLogger()
 
     logLevel := plog.Info
     plog.FlagDebugVar(&logLevel,  "v", "debug")

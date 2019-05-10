@@ -7,14 +7,14 @@ You can log over a console or over a go chan.
 
 Example how to log over a console:
 
-package main
+    package main
 
-import "github.com/j-keck/plog"
+    import "github.com/j-keck/plog"
 
-func main() {
-  log := plog.NewConsoleLogger()
-  log.Infof("2 + 2 = %d", 2 + 2)
-}
+    func main() {
+      log := plog.NewConsoleLogger()
+      log.Infof("2 + 2 = %d", 2 + 2)
+    }
 */
 package plog
 

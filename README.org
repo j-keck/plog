@@ -28,7 +28,7 @@ Simple console logging
    import  "github.com/j-keck/plog"
 
    func main() {
-       log := plog.NewConsoleLogger()
+       log := plog.NewDefaultConsoleLogger()
 
        log.Info("startup")
        log.Debug("change to debug level")
@@ -42,8 +42,8 @@ go run examples/console.go
 #+END_SRC
 
 #+RESULTS:
-:  INFO | 06.05 10:08:45.169 |              console:8   | startup
-: DEBUG | 06.05 10:08:45.169 |              console:11  | level changed
+: Fri May 10 11:29:58 CEST 2019 |  INFO | startup
+: Fri May 10 11:29:58 CEST 2019 | DEBUG | level changed
 
 
 *** log stream
@@ -97,7 +97,7 @@ Log level per flag
 
 
   func main() {
-      log := plog.NewConsoleLogger()
+      log := plog.NewDefaultConsoleLogger()
 
       logLevel := plog.Info
       plog.FlagDebugVar(&logLevel,  "v", "debug")
@@ -122,20 +122,20 @@ run go run examples/flag.go -vv
 
 #+RESULTS:
 #+begin_example
-
+--------------------------------------------------------------------------------
 go run examples/flag.go
- INFO | 06.05 10:08:57.578 |                 flag:17  | info
+Fri May 10 11:30:01 CEST 2019 |  INFO | info
 
-
+--------------------------------------------------------------------------------
 go run examples/flag.go -v
- INFO | 06.05 10:08:57.961 |                 flag:17  | info
-DEBUG | 06.05 10:08:57.962 |                 flag:18  | debug
+Fri May 10 11:30:01 CEST 2019 |  INFO | info
+Fri May 10 11:30:01 CEST 2019 | DEBUG | debug
 
-
+--------------------------------------------------------------------------------
 go run examples/flag.go -vv
- INFO | 06.05 10:08:58.308 |                 flag:17  | info
-DEBUG | 06.05 10:08:58.308 |                 flag:18  | debug
-TRACE | 06.05 10:08:58.308 |                 flag:19  | trace
+Fri May 10 11:30:01 CEST 2019 |  INFO | info
+Fri May 10 11:30:01 CEST 2019 | DEBUG | debug
+Fri May 10 11:30:01 CEST 2019 | TRACE | trace
 
 #+end_example
 
@@ -154,9 +154,9 @@ but you can also use stream loggers.
 
   func main() {
       log := plog.NewBroadcastLogger(
-          plog.NewConsoleLogger(),
-          plog.NewConsoleLogger(),
-          plog.NewConsoleLogger(),
+          plog.NewConsoleLogger(" | ", plog.Message, plog.Level),
+          plog.NewConsoleLogger(" - ", plog.Message, plog.TimestampUnixDate),
+          plog.NewConsoleLogger(" / ", plog.Message, plog.TimestampMillis),
       )
 
       log.Info("startup")
@@ -171,12 +171,12 @@ go run examples/broadcast.go
 #+END_SRC
 
 #+RESULTS:
-:  INFO | 06.05 10:09:03.649 |            broadcast:12  | startup
-:  INFO | 06.05 10:09:03.649 |            broadcast:12  | startup
-:  INFO | 06.05 10:09:03.649 |            broadcast:12  | startup
-: DEBUG | 06.05 10:09:03.649 |            broadcast:15  | level changed
-: DEBUG | 06.05 10:09:03.649 |            broadcast:15  | level changed
-: DEBUG | 06.05 10:09:03.649 |            broadcast:15  | level changed
+: startup |  INFO
+: startup - Fri May 10 11:30:03 CEST 2019
+: startup / May 10 11:30:03.634
+: level changed | DEBUG
+: level changed - Fri May 10 11:30:03 CEST 2019
+: level changed / May 10 11:30:03.634
 
 *** change log output
 
@@ -185,14 +185,13 @@ go run examples/broadcast.go
 
   import "github.com/j-keck/plog"
 
-
   func main() {
-      log := plog.NewConsoleLogger()
-      log.SetLogFields(
-          plog.Level("%-5s"),
-          plog.Timestamp("Mon Jan 2 15:04:05"),
-          plog.Message("%s"),
-      ).SetLogSeparator(" - ")
+      log := plog.NewConsoleLogger(" - ",
+          plog.TimestampFmt("2006-01-02T15:04:05Z07:00"),
+          plog.LevelFmt("(%-5s)"),
+          plog.Location,
+          plog.Message,
+      )
 
       log.Info("startup")
       log.Debug("change to debug level")
@@ -207,5 +206,5 @@ go run examples/logformat.go
 #+END_SRC
 
 #+RESULTS:
-: INFO  - Mon May 6 10:09:08 - startup
-: DEBUG - Mon May 6 10:09:08 - level changed
+: 2019-05-10T11:30:06+02:00 - (INFO ) -            logformat:13  - startup
+: 2019-05-10T11:30:06+02:00 - (DEBUG) -            logformat:16  - level changed
