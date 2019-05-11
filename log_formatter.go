@@ -6,20 +6,17 @@ import (
 )
 
 // LogFormatter formats a LogMessage
-//
-//
-//
 type LogFormatter struct {
-	prefix    string
-	separator string
-	suffix    string
-	columns   []Column
+	prefix      string
+	separator   string
+	suffix      string
+	formatters  []Formatter
 }
 
 // NewLogFormatter create a LogFormatter with the given separator string
-// and the given columns.
-func NewLogFormatter(sep string, columns ...Column) LogFormatter {
-	return LogFormatter{"", sep, "", columns}
+// and the given column formatters.
+func NewLogFormatter(sep string, formatters ...Formatter) LogFormatter {
+	return LogFormatter{"", sep, "", formatters}
 }
 
 // SetLogPrefix sets a prefix which will be prepended to each line.
@@ -38,11 +35,11 @@ func (self *LogFormatter) SetLogSuffix(suffix string) *LogFormatter {
 func (self *LogFormatter) Format(msg LogMessage) string {
 	var builder strings.Builder
 
-	for _, col := range self.columns {
+	for _, formatter := range self.formatters {
 		if builder.Len() > 0 {
 			builder.WriteString(self.separator)
 		}
-		builder.WriteString(col.fmt(&msg))
+		builder.WriteString(formatter.Format(&msg))
 	}
 
 	return self.prefix + builder.String() + self.suffix
@@ -51,21 +48,20 @@ func (self *LogFormatter) Format(msg LogMessage) string {
 
 
 
-
-// Predefined log columns
+// Predefined formatters
 const (
 	Level             = LevelFmt("%5s")
 	Timestamp         = TimestampFmt("Jan _2 15:04:05")
 	TimestampMillis   = TimestampFmt("Jan _2 15:04:05.000")
 	TimestampUnixDate = TimestampFmt("Mon Jan _2 15:04:05 MST 2006")
-	Location          = LocationFmt("%20s:%-3d")
-	File              = FileFmt("%20s")
+	Location          = LocationFmt("%15s:%-3d")
+	File              = FileFmt("%15s")
 	Line              = LineFmt("%-3d")
 	Message           = MessageFmt("%s")
 )
 
-type Column interface {
-	fmt(*LogMessage) string
+type Formatter interface {
+	Format(*LogMessage) string
 }
 
 // LevelFmt describes how the LogLevel are formatted.
@@ -73,7 +69,7 @@ type Column interface {
 // Typical format is "%5s".
 type LevelFmt string
 
-func (self LevelFmt) fmt(msg *LogMessage) string {
+func (self LevelFmt) Format(msg *LogMessage) string {
 	return fmt.Sprintf(string(self), msg.Level)
 }
 
@@ -83,16 +79,16 @@ func (self LevelFmt) fmt(msg *LogMessage) string {
 //   https://golang.org/pkg/time/#Time.Format
 type TimestampFmt string
 
-func (self TimestampFmt) fmt(msg *LogMessage) string {
+func (self TimestampFmt) Format(msg *LogMessage) string {
 	return msg.Timestamp.Format(string(self))
 }
 
 // FileFmt describes how the log-caller filename are formatted.
 //
-// Typical format is "%20s".
+// Typical format is "%15s".
 type FileFmt string
 
-func (self FileFmt) fmt(msg *LogMessage) string {
+func (self FileFmt) Format(msg *LogMessage) string {
 	return fmt.Sprintf(string(self), msg.File)
 }
 
@@ -101,7 +97,7 @@ func (self FileFmt) fmt(msg *LogMessage) string {
 // Typical format is "%-3d"
 type LineFmt string
 
-func (self LineFmt) fmt(msg *LogMessage) string {
+func (self LineFmt) Format(msg *LogMessage) string {
 	return fmt.Sprintf(string(self), msg.Line)
 }
 
@@ -110,7 +106,7 @@ func (self LineFmt) fmt(msg *LogMessage) string {
 // The location combines the log-caller filename and source line.
 type LocationFmt string
 
-func (self LocationFmt) fmt(msg *LogMessage) string {
+func (self LocationFmt) Format(msg *LogMessage) string {
 	return fmt.Sprintf(string(self), msg.File, msg.Line)
 }
 
@@ -119,6 +115,6 @@ func (self LocationFmt) fmt(msg *LogMessage) string {
 // Typical format is "%s".
 type MessageFmt string
 
-func (self MessageFmt) fmt(msg *LogMessage) string {
+func (self MessageFmt) Format(msg *LogMessage) string {
 	return fmt.Sprintf(string(self), msg.Message)
 }

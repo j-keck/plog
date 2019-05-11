@@ -15,10 +15,10 @@ type consoleLogger struct {
 
 // NewConsoleLogger creates a new logger, where the log messages
 // are emitted to the console
-func NewConsoleLogger(separator string, columns ...Column) *consoleLogger {
+func NewConsoleLogger(separator string, formatters ...Formatter) *consoleLogger {
 	self := new(consoleLogger)
 	initLogger(self)
-	self.LogFormatter = NewLogFormatter(separator, columns...)
+	self.LogFormatter = NewLogFormatter(separator, formatters...)
 	self.SetStdout(os.Stdout)
 	self.SetStderr(os.Stderr)
 	return self
