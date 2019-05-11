@@ -4,7 +4,15 @@ package main
 import  "github.com/j-keck/plog"
 
 func main() {
-    log := plog.NewDefaultConsoleLogger()
+    log := plog.NewConsoleLogger(
+        " - ",
+        plog.Level,
+        plog.TimestampMillis,
+        plog.Message,
+    )
+
+    // set log prefix and suffix
+    log.SetLogPrefix("[").SetLogSuffix("]")
 
     log.Info("startup")
     log.Debug("change to debug level")

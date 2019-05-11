@@ -36,7 +36,7 @@ func (self *streamLogger) Subscribe(bufferSize int) <-chan LogMessage {
 	return sub
 }
 
-// WaitForSubscribers waits till all consumers have received all
+// WaitForSubscribers waits till all subscribers have received all
 // messages.
 //
 // Note: This function does NOT block until the consumers have

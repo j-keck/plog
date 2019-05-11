@@ -1,95 +1,261 @@
-* plog - pico log for go
+#+TITLE: plog (pico log) - golang logging library
+#+PROPERTY: header-args :eval never-export
 
-pico log - because it's so small and has no dependencies (only from go's stdlib).
+* Intro
+
+pico log - because it's so small and has zero dependencies.
 
 ** Why?
 
-I want a logging library with
+ I want a logging library with
 
-  - zero dependencies
-  - can emit log messages per chan
-  - easy to use
-  - TODO: abstract over other loggers
+   - zero dependencies
+   - easy to use
+   - can emit log messages per go channel
 
-*** Non Goals
+** Non Goals
 
-  - blazing fast
-  - a lot of features
-
-** Examples
-
-*** console logging
-
-Simple console logging
-
- #+BEGIN_SRC go :tangle examples/console.go
-   package main
-
-   import  "github.com/j-keck/plog"
-
-   func main() {
-       log := plog.NewDefaultConsoleLogger()
-
-       log.Info("startup")
-       log.Debug("change to debug level")
-       log.SetLevel(plog.Debug)
-       log.Debug("level changed")
-   }
- #+END_SRC
-
-#+BEGIN_SRC shell :results output :exports both
-go run examples/console.go
-#+END_SRC
-
-#+RESULTS:
-: Fri May 10 11:29:58 CEST 2019 |  INFO | startup
-: Fri May 10 11:29:58 CEST 2019 | DEBUG | level changed
+ - blazing fast
+ - a lot of features
 
 
-*** log stream
+* Usage
 
-log stream per go chan
+/After each code block you will see an output example./
 
-#+BEGIN_SRC go :tangle examples/stream.go
+** Create a console logger instance
+
+*** ~plog.NewDefaultConsoleLogger()~
+
+This function creates a console logger where each log column are separated with " | "
+and three log columns: the logging timestamp, the log level and the log message.
+
+#+BEGIN_SRC go -r :tangle examples/console.go :exports both
   package main
 
-  import "github.com/j-keck/plog"
-  import "fmt"
-  import "time"
+  import  "github.com/j-keck/plog"
 
   func main() {
-      log := plog.NewStreamLogger()
-      logC := log.Subscribe(10)
+      log := plog.NewDefaultConsoleLogger()
 
       log.Info("startup")
       log.Debug("change to debug level")
       log.SetLevel(plog.Debug)
       log.Debug("level changed")
-
-      go func() {
-        for msg := range logC {
-          fmt.Printf("%s: %s\n", msg.Level, msg.Message)
-        }
-      }()
-
-      log.WaitForSubscribers(100 * time.Millisecond)
+      log.Infof("2 + 2 = %d", 2 + 2)
   }
 #+END_SRC
 
-#+BEGIN_SRC shell :results output :exports both
-go run examples/stream.go
-#+END_SRC
-
 #+RESULTS:
-: INFO: startup
-: DEBUG: level changed
+: Sat May 11 19:01:20 CEST 2019 |  INFO | startup
+: Sat May 11 19:01:20 CEST 2019 | DEBUG | level changed
+: Sat May 11 19:01:20 CEST 2019 |  INFO | 2 + 2 = 4
 
 
-*** flags
+*** ~plog.NewConsoleLogger(separator string, formatters ...plog.Formatter)~
 
-Log level per flag
+This function creates a logger with a custom log output format.
 
-#+BEGIN_SRC go :tangle examples/flag.go
+The first argument is a separator with separates each log column,
+the rest are "column formatters". These describes which columns
+and how this columns are formatted (see [[#formatters][Formatters]] for more information).
+
+  #+BEGIN_SRC go -r :tangle examples/console-custom-format.go :exports both
+    package main
+
+    import  "github.com/j-keck/plog"
+
+    func main() {
+        log := plog.NewConsoleLogger(
+            " - ",
+            plog.Level,
+            plog.TimestampMillis,
+            plog.Message,
+        )
+
+        // set log prefix and suffix
+        log.SetLogPrefix("[").SetLogSuffix("]")
+
+        log.Info("startup")
+        log.Debug("change to debug level")
+        log.SetLevel(plog.Debug)
+        log.Debug("level changed")
+        log.Infof("2 + 2 = %d", 2 + 2)
+    }
+  #+END_SRC
+
+  #+RESULTS:
+  : [ INFO - May 11 19:01:21.574 - startup]
+  : [DEBUG - May 11 19:01:21.575 - level changed]
+  : [ INFO - May 11 19:01:21.575 - 2 + 2 = 4]
+
+
+
+* API
+
+Each logger instance have the following functions:
+
+  | ~SetLevel(LogLevel)~                               | Set the log level. From ~plog.Trace~ to ~plog.Error~ |
+  | ~Trace(string)~ / ~Tracef(string, ...{}interface)~ | Trace logging                                        |
+  | ~Debug(string)~ / ~Debugf(string, ...{}interface)~ | Debug logging                                        |
+  | ~Info(string)~ / ~Infof(string, ...{}interface)~   | Info logging                                         |
+  | ~Warn(string)~ / ~Warnf(string, ...{}interface)~   | Warn logging                                         |
+  | ~Error(string)~ / ~Errorf(string, ...{}interface)~ | Error logging                                        |
+  | ~Fatal(string)~ / ~Fatalf(string, ...{}interface)~ | Fatal logging                                        |
+
+Where the log functions act like ~fmt.Print(string)~ and ~fmt.Printf(string, ...{}interface)~.
+
+
+*** Console logger API
+
+The ~consoleLogger~ has the following additional functions:
+
+  | ~SetStdout(io.Writer)~ | Redirect stdout                              |
+  | ~SetStderr(io.Writer)~ | Redirect stderr                              |
+  | ~SetLogPrefix(string)~ | Prepend the given string on each log message |
+  | ~SetLogSuffix(string)~ | Append the given string on each log message  |
+
+
+*** Stream logger API
+
+The ~streamLogger~ has the following additional functions:
+
+| ~SetStderr(io.Writer)~                        | Redirect stderr                                        |
+| ~Subscribe(bufferSize int) <-chan LogMessage~ | Get a go channel where the log messages are emitted    |
+| ~WaitForSubscribers(timeout time.Duration)~   | Blocks till all subscribers have received all messages |
+
+
+** Set the log level per programm arguments
+
+ *plog* provides two helper functions to configure the LogLevel per program arguments:
+
+   - ~plog.FlagDebugVar(p *LogLevel, name string, usage string)~
+   - ~plog.FlagTraceVar(p *LogLevel, name string, usage string)~
+
+ see [[#set-loglevel-per-program-arguments][Set LogLevel per program arguments]] for a example.
+
+
+** Formatters
+
+ Formatters describes which and how each log column are logged.
+
+ To define the format of the log message, you can use predefined formatters
+ or construct your own.
+
+***** Predefined formatter
+
+  #+BEGIN_SRC go :imports '("github.com/j-keck/plog" "time" "fmt" "strings") :exports results
+    msg := plog.LogMessage{plog.Info, time.Now(), "go_srcfile", 33, "Test"}
+    show := func(name string, formatter plog.Formatter) {
+      fmt.Printf("%-46s | '%s'\n", name, formatter.Format(&msg))
+    }
+    fmt.Printf("%-46s | example output\n%s\n", "formatter", strings.Repeat("-", 80))
+    show("plog.Level", plog.Level)
+    show("plog.Timestamp", plog.Timestamp)
+    show("plog.TimestampMillis", plog.TimestampMillis)
+    show("plog.TimestampUnixDate", plog.TimestampUnixDate)
+    show("plog.Location", plog.Location)
+    show("plog.File", plog.File)
+    show("plog.Line", plog.Line)
+    show("plog.Message", plog.Message)
+  #+END_SRC
+
+  #+RESULTS:
+  #+begin_example
+  formatter                                      | example output
+  --------------------------------------------------------------------------------
+  plog.Level                                     | ' INFO'
+  plog.Timestamp                                 | 'May 11 19:01:22'
+  plog.TimestampMillis                           | 'May 11 19:01:22.340'
+  plog.TimestampUnixDate                         | 'Sat May 11 19:01:22 CEST 2019'
+  plog.Location                                  | '     go_srcfile:33 '
+  plog.File                                      | '     go_srcfile'
+  plog.Line                                      | '33 '
+  plog.Message                                   | 'Test'
+  #+end_example
+
+
+***** Custom Columns
+
+A custom formatter expects a format string, which describes how each log column are formatted.
+
+The ~TimestampFmt~ formatter used ~time.Format(format string)~ to format the
+timestamp column. See the [[https://golang.org/pkg/time/#Time.Format][time.Format]] api for a description.
+
+The ~LineFmt~ formatter expects a ~%d~ in his format where the line number
+should be inserted.
+
+All other formatters expects a ~%s~ where the value should be inserted.
+
+  #+BEGIN_SRC go :imports '("github.com/j-keck/plog" "time" "fmt" "strings") :exports results
+    msg := plog.LogMessage{plog.Info, time.Now(), "go_srcfile", 33, "Test"}
+    show := func(name string, formatter plog.Formatter) {
+      fmt.Printf("%-46s | '%s'\n", name, formatter.Format(&msg))
+    }
+    fmt.Printf("%-46s | example output\n%s\n", "formatter", strings.Repeat("-", 80))
+    show("plog.LevelFmt(\"%10s\")", plog.LevelFmt("(%10s)"))
+    show("plog.TimestampFmt(\"15:04:05.000\")", plog.TimestampFmt("15:04:05.000"))
+    show("plog.TimestampFmt(\"2006-01-02T15:04:05Z07:00\")", plog.TimestampFmt("2006-01-02T15:04:05Z07:00"))
+    show("plog.LocationFmt(\"[file: %s, line: %d]\")", plog.LocationFmt("[file: %s, line: %d]"))
+    show("plog.FileFmt(\"<%s>\")", plog.FileFmt("<%s>"))
+    show("plog.LineFmt(\"[%d]\")", plog.LineFmt("[%d]"))
+
+  #+END_SRC
+
+  #+RESULTS:
+  : formatter                                      | example output
+  : --------------------------------------------------------------------------------
+  : plog.LevelFmt("%10s")                          | '(      INFO)'
+  : plog.TimestampFmt("15:04:05.000")              | '19:01:23.172'
+  : plog.TimestampFmt("2006-01-02T15:04:05Z07:00") | '2019-05-11T19:01:23+02:00'
+  : plog.LocationFmt("[file: %s, line: %d]")       | '[file: go_srcfile, line: 33]'
+  : plog.FileFmt("<%s>")                           | '<go_srcfile>'
+  : plog.LineFmt("[%d]")                           | '[33]'
+
+
+
+* Examples
+
+** Custom log format
+
+  #+BEGIN_SRC go :tangle examples/logformat.go :eval no
+    package main
+
+    import "github.com/j-keck/plog"
+
+    func main() {
+        log := plog.NewConsoleLogger(" - ",
+            plog.LevelFmt("(%-5s)"),
+            plog.TimestampFmt("2006-01-02T15:04:05Z07:00"),
+            plog.MessageFmt("%-20s"),
+            plog.LocationFmt("%s[%d]"),
+
+        )
+        log.SetLogPrefix("[").SetLogSuffix("]")
+
+        log.Info("startup")
+        log.Debug("change to debug level")
+        log.SetLevel(plog.Debug)
+        log.Debug("level changed")
+        log.Infof("2 + 2 = %d", 2 + 2)
+    }
+  #+END_SRC
+
+  #+BEGIN_SRC shell :results output :exports both
+  go run examples/logformat.go
+  #+END_SRC
+
+  #+RESULTS:
+  : [(INFO ) - 2019-05-11T19:01:23+02:00 - startup              - logformat[16]]
+  : [(DEBUG) - 2019-05-11T19:01:23+02:00 - level changed        - logformat[19]]
+  : [(INFO ) - 2019-05-11T19:01:23+02:00 - 2 + 2 = 4            - logformat[20]]
+
+
+
+
+** Set LogLevel per program arguments
+
+#+BEGIN_SRC go :tangle examples/flag.go :eval no
   package main
 
   import "github.com/j-keck/plog"
@@ -112,6 +278,7 @@ Log level per flag
   }
 #+END_SRC
 
+
 #+BEGIN_SRC shell :results output :exports both
 run() { echo $(repeat 80 printf -); echo $@; $@; echo;}
 
@@ -122,47 +289,89 @@ run go run examples/flag.go -vv
 
 #+RESULTS:
 #+begin_example
---------------------------------------------------------------------------------
+
 go run examples/flag.go
-Fri May 10 11:30:01 CEST 2019 |  INFO | info
+Sat May 11 19:01:24 CEST 2019 |  INFO | info
 
---------------------------------------------------------------------------------
+
 go run examples/flag.go -v
-Fri May 10 11:30:01 CEST 2019 |  INFO | info
-Fri May 10 11:30:01 CEST 2019 | DEBUG | debug
+Sat May 11 19:01:25 CEST 2019 |  INFO | info
+Sat May 11 19:01:25 CEST 2019 | DEBUG | debug
 
---------------------------------------------------------------------------------
+
 go run examples/flag.go -vv
-Fri May 10 11:30:01 CEST 2019 |  INFO | info
-Fri May 10 11:30:01 CEST 2019 | DEBUG | debug
-Fri May 10 11:30:01 CEST 2019 | TRACE | trace
+Sat May 11 19:01:25 CEST 2019 |  INFO | info
+Sat May 11 19:01:25 CEST 2019 | DEBUG | debug
+Sat May 11 19:01:25 CEST 2019 | TRACE | trace
 
 #+end_example
 
 
-*** broadcast
+** Log over a go channel
 
-Broadcast log messages to multiple receivers.
+~plog.NewStreamLogger()~ creates a new streaming logger.
+With ~Subscribe(bufferSize int) <-chan LogMessage~ you get a go channel where
+the log messages are emitted.
+
+#+BEGIN_SRC go :tangle examples/stream.go :eval no
+  package main
+
+  import "github.com/j-keck/plog"
+  import "fmt"
+  import "time"
+
+  func main() {
+      log := plog.NewStreamLogger()
+      logC := log.Subscribe(10)
+
+      log.Info("startup")
+      log.Debug("change to debug level")
+      log.SetLevel(plog.Debug)
+      log.Debug("level changed")
+      log.Infof("2 + 2 = %d", 2 + 2)
+
+      go func() {
+        for msg := range logC {
+          fmt.Printf("%s: %s\n", msg.Level, msg.Message)
+        }
+      }()
+
+      log.WaitForSubscribers(100 * time.Millisecond)
+  }
+#+END_SRC
+
+#+BEGIN_SRC shell :results output :exports both
+go run examples/stream.go
+#+END_SRC
+
+#+RESULTS:
+: INFO: startup
+: DEBUG: level changed
+: INFO: 2 + 2 = 4
+
+
+** Broadcast log messages to multiple receivers.
 
 To simplify the example, only console loggers are used,
 but you can also use stream loggers.
 
-#+BEGIN_SRC go :tangle examples/broadcast.go
+#+BEGIN_SRC go :tangle examples/broadcast.go :eval no
   package main
 
   import "github.com/j-keck/plog"
 
   func main() {
       log := plog.NewBroadcastLogger(
-          plog.NewConsoleLogger(" | ", plog.Message, plog.Level),
-          plog.NewConsoleLogger(" - ", plog.Message, plog.TimestampUnixDate),
-          plog.NewConsoleLogger(" / ", plog.Message, plog.TimestampMillis),
+          plog.NewDefaultConsoleLogger(),
+          plog.NewDefaultConsoleLogger(),
+          plog.NewDefaultConsoleLogger(),
       )
 
       log.Info("startup")
       log.Debug("change to debug level")
       log.SetLevel(plog.Debug)
       log.Debug("level changed")
+      log.Infof("2 + 2 = %d", 2 + 2)
   }
 #+END_SRC
 
@@ -171,40 +380,12 @@ go run examples/broadcast.go
 #+END_SRC
 
 #+RESULTS:
-: startup |  INFO
-: startup - Fri May 10 11:30:03 CEST 2019
-: startup / May 10 11:30:03.634
-: level changed | DEBUG
-: level changed - Fri May 10 11:30:03 CEST 2019
-: level changed / May 10 11:30:03.634
-
-*** change log output
-
-#+BEGIN_SRC go :tangle examples/logformat.go
-  package main
-
-  import "github.com/j-keck/plog"
-
-  func main() {
-      log := plog.NewConsoleLogger(" - ",
-          plog.TimestampFmt("2006-01-02T15:04:05Z07:00"),
-          plog.LevelFmt("(%-5s)"),
-          plog.Location,
-          plog.Message,
-      )
-
-      log.Info("startup")
-      log.Debug("change to debug level")
-      log.SetLevel(plog.Debug)
-      log.Debug("level changed")
-  }
-#+END_SRC
-
-
-#+BEGIN_SRC shell :results output :exports both
-go run examples/logformat.go
-#+END_SRC
-
-#+RESULTS:
-: 2019-05-10T11:30:06+02:00 - (INFO ) -            logformat:13  - startup
-: 2019-05-10T11:30:06+02:00 - (DEBUG) -            logformat:16  - level changed
+: Sat May 11 19:01:27 CEST 2019 |  INFO | startup
+: Sat May 11 19:01:27 CEST 2019 |  INFO | startup
+: Sat May 11 19:01:27 CEST 2019 |  INFO | startup
+: Sat May 11 19:01:27 CEST 2019 | DEBUG | level changed
+: Sat May 11 19:01:27 CEST 2019 | DEBUG | level changed
+: Sat May 11 19:01:27 CEST 2019 | DEBUG | level changed
+: Sat May 11 19:01:27 CEST 2019 |  INFO | 2 + 2 = 4
+: Sat May 11 19:01:27 CEST 2019 |  INFO | 2 + 2 = 4
+: Sat May 11 19:01:27 CEST 2019 |  INFO | 2 + 2 = 4
