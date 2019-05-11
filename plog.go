@@ -1,9 +1,11 @@
 /*
 Package plog is a logging library.
 
-You can log over a console or over a go chan.
 
---------------------------------------------------------------------------------
+Checkout https://github.com/j-keck/plog for more information.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
 Example how to log over a console:
 
     package main
@@ -26,6 +28,39 @@ Output:
     Sat May 11 18:18:08 CEST 2019 |  INFO | startup
     Sat May 11 18:18:08 CEST 2019 | DEBUG | level changed
     Sat May 11 18:18:08 CEST 2019 |  INFO | 2 + 2 = 4
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Example how to configure the log output:
+
+    package main
+
+    import  "github.com/j-keck/plog"
+
+    func main() {
+        log := plog.NewConsoleLogger(
+            " - ",
+            plog.Level,
+            plog.TimestampMillis,
+            plog.Message,
+        )
+
+        // set log prefix and suffix
+        log.SetLogPrefix("[").SetLogSuffix("]")
+
+        log.Info("startup")
+        log.Debug("change to debug level")
+        log.SetLevel(plog.Debug)
+        log.Debug("level changed")
+        log.Infof("2 + 2 = %d", 2 + 2)
+    }
+
+Output:
+
+   [ INFO - May 11 19:01:21.574 - startup]
+   [DEBUG - May 11 19:01:21.575 - level changed]
+   [ INFO - May 11 19:01:21.575 - 2 + 2 = 4]
 
 */
 package plog
