@@ -31,6 +31,12 @@ func (self *LogFormatter) SetLogSuffix(suffix string) *LogFormatter {
 	return self
 }
 
+// AddLogFormatter adds a column formatter
+func (self *LogFormatter) AddLogFormatter(formatter Formatter) *LogFormatter {
+	self.formatters = append(self.formatters, formatter)
+	return self
+}
+
 // Format the give log message
 func (self *LogFormatter) Format(msg LogMessage) string {
 	var builder strings.Builder

@@ -19,16 +19,31 @@ pico log - because it's so small and has zero dependencies.
  - a lot of features
 
 
+** Features
+
+  - console logging
+
+  - log over go channel
+
+  - log output format configurable \\
+    (see [[#custom-log-format][Custom log format]], [[#log-output-format-per-program-arguments][Log output format per program arguments]] for examples)
+
+  - helper functions to set log level per command line arguments \\
+    (see [[#set-loglevel-per-program-arguments][Set LogLevel per program arguments]] for examples)
+
 * Usage
 
 /After each code block you will see an output example./
 
 ** Create a console logger instance
 
+You create a console logger per ~plog.NewDefaultConsoleLogger~ or ~plog.NewConsoleLogger~.
+
 *** ~plog.NewDefaultConsoleLogger()~
 
 This function creates a console logger where each log column are separated with " | "
-and three log columns: the logging timestamp, the log level and the log message.
+and three log columns: the timestamp of the log event, the log level for the message
+and the log message.
 
 #+BEGIN_SRC go -r :tangle examples/console.go :exports both
   package main
@@ -47,9 +62,9 @@ and three log columns: the logging timestamp, the log level and the log message.
 #+END_SRC
 
 #+RESULTS:
-: Sat May 11 19:01:20 CEST 2019 |  INFO | startup
-: Sat May 11 19:01:20 CEST 2019 | DEBUG | level changed
-: Sat May 11 19:01:20 CEST 2019 |  INFO | 2 + 2 = 4
+: Sun May 12 09:39:06 CEST 2019 |  INFO | startup
+: Sun May 12 09:39:06 CEST 2019 | DEBUG | level changed
+: Sun May 12 09:39:06 CEST 2019 |  INFO | 2 + 2 = 4
 
 
 *** ~plog.NewConsoleLogger(separator string, formatters ...plog.Formatter)~
@@ -85,9 +100,9 @@ and how this columns are formatted (see [[#formatters][Formatters]] for more inf
   #+END_SRC
 
   #+RESULTS:
-  : [ INFO - May 11 19:01:21.574 - startup]
-  : [DEBUG - May 11 19:01:21.575 - level changed]
-  : [ INFO - May 11 19:01:21.575 - 2 + 2 = 4]
+  : [ INFO - May 12 09:39:07.068 - startup]
+  : [DEBUG - May 12 09:39:07.068 - level changed]
+  : [ INFO - May 12 09:39:07.069 - 2 + 2 = 4]
 
 
 
@@ -110,10 +125,11 @@ Where the log functions act like ~fmt.Print(string)~ and ~fmt.Printf(string, ...
 
 The ~consoleLogger~ has the following additional functions:
 
-  | ~SetStdout(io.Writer)~ | Redirect stdout                              |
-  | ~SetStderr(io.Writer)~ | Redirect stderr                              |
-  | ~SetLogPrefix(string)~ | Prepend the given string on each log message |
-  | ~SetLogSuffix(string)~ | Append the given string on each log message  |
+  | ~SetStdout(io.Writer)~       | Redirect stdout                                |
+  | ~SetStderr(io.Writer)~       | Redirect stderr                                |
+  | ~SetLogPrefix(string)~       | Prepend the given string on each log message   |
+  | ~SetLogSuffix(string)~       | Append the given string on each log message    |
+  | ~AddLogFormatter(Formatter)~ | Add an log formatter to format the log message |
 
 
 *** Stream logger API
@@ -165,9 +181,9 @@ The ~streamLogger~ has the following additional functions:
   formatter                                      | example output
   --------------------------------------------------------------------------------
   plog.Level                                     | ' INFO'
-  plog.Timestamp                                 | 'May 11 19:01:22'
-  plog.TimestampMillis                           | 'May 11 19:01:22.340'
-  plog.TimestampUnixDate                         | 'Sat May 11 19:01:22 CEST 2019'
+  plog.Timestamp                                 | 'May 12 09:39:07'
+  plog.TimestampMillis                           | 'May 12 09:39:07.450'
+  plog.TimestampUnixDate                         | 'Sun May 12 09:39:07 CEST 2019'
   plog.Location                                  | '     go_srcfile:33 '
   plog.File                                      | '     go_srcfile'
   plog.Line                                      | '33 '
@@ -192,7 +208,7 @@ All other formatters expects a ~%s~ where the value should be inserted.
     show := func(name string, formatter plog.Formatter) {
       fmt.Printf("%-46s | '%s'\n", name, formatter.Format(&msg))
     }
-    fmt.Printf("%-46s | example output\n%s\n", "formatter", strings.Repeat("-", 80))
+    fmt.Printf("%-46s | example output\n%s\n", "formatter examples", strings.Repeat("-", 80))
     show("plog.LevelFmt(\"%10s\")", plog.LevelFmt("(%10s)"))
     show("plog.TimestampFmt(\"15:04:05.000\")", plog.TimestampFmt("15:04:05.000"))
     show("plog.TimestampFmt(\"2006-01-02T15:04:05Z07:00\")", plog.TimestampFmt("2006-01-02T15:04:05Z07:00"))
@@ -203,11 +219,11 @@ All other formatters expects a ~%s~ where the value should be inserted.
   #+END_SRC
 
   #+RESULTS:
-  : formatter                                      | example output
+  : formatter examples                             | example output
   : --------------------------------------------------------------------------------
   : plog.LevelFmt("%10s")                          | '(      INFO)'
-  : plog.TimestampFmt("15:04:05.000")              | '19:01:23.172'
-  : plog.TimestampFmt("2006-01-02T15:04:05Z07:00") | '2019-05-11T19:01:23+02:00'
+  : plog.TimestampFmt("15:04:05.000")              | '09:39:07.822'
+  : plog.TimestampFmt("2006-01-02T15:04:05Z07:00") | '2019-05-12T09:39:07+02:00'
   : plog.LocationFmt("[file: %s, line: %d]")       | '[file: go_srcfile, line: 33]'
   : plog.FileFmt("<%s>")                           | '<go_srcfile>'
   : plog.LineFmt("[%d]")                           | '[33]'
@@ -246,21 +262,106 @@ All other formatters expects a ~%s~ where the value should be inserted.
   #+END_SRC
 
   #+RESULTS:
-  : [(INFO ) - 2019-05-11T19:01:23+02:00 - startup              - logformat[16]]
-  : [(DEBUG) - 2019-05-11T19:01:23+02:00 - level changed        - logformat[19]]
-  : [(INFO ) - 2019-05-11T19:01:23+02:00 - 2 + 2 = 4            - logformat[20]]
+  : [(INFO ) - 2019-05-12T09:39:08+02:00 - startup              - logformat[16]]
+  : [(DEBUG) - 2019-05-12T09:39:08+02:00 - level changed        - logformat[19]]
+  : [(INFO ) - 2019-05-12T09:39:08+02:00 - 2 + 2 = 4            - logformat[20]]
 
 
 
+** Log output format per program arguments
 
-** Set LogLevel per program arguments
-
-#+BEGIN_SRC go :tangle examples/flag.go :eval no
+#+BEGIN_SRC go :tangle examples/log-output-format-per-args.go :eval no
   package main
 
   import "github.com/j-keck/plog"
   import "flag"
 
+  func main() {
+      //
+      // flags
+      //
+      logTs := flag.Bool("log-timestamps", false, "log messages with timestamps")
+      logLocation := flag.Bool("log-location", false, "log messages with caller location")
+      flag.Parse()
+
+      //
+      // initialize / configure the logger
+      //
+      log := plog.NewConsoleLogger(" | ")
+
+      // timestamp only when '-log-timestamps' flag is given
+      if *logTs {
+          log.AddLogFormatter(plog.TimestampUnixDate)
+      }
+
+      // log level
+      log.AddLogFormatter(plog.Level)
+
+      // location only when '-log-location' flag is given
+      if *logLocation {
+          log.AddLogFormatter(plog.Location)
+      }
+
+      // log message
+      log.AddLogFormatter(plog.Message)
+
+
+      //
+      // action
+      //
+      log.Info("startup")
+      log.Debug("change to debug level")
+      log.SetLevel(plog.Debug)
+      log.Debug("level changed")
+      log.Infof("2 + 2 = %d", 2 + 2)
+  }
+#+END_SRC
+
+#+BEGIN_SRC shell :results output :exports results
+run() { echo $(printf "=%.0s" {1..80}); echo "j@main:~ ⟩ $@"; $@; echo;}
+
+run go run examples/log-output-format-per-args.go
+run go run examples/log-output-format-per-args.go -log-timestamps
+run go run examples/log-output-format-per-args.go -log-location
+run go run examples/log-output-format-per-args.go -log-timestamps -log-location
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+================================================================================
+j@main:~ ⟩ go run examples/log-output-format-per-args.go
+ INFO | startup
+DEBUG | level changed
+ INFO | 2 + 2 = 4
+
+================================================================================
+j@main:~ ⟩ go run examples/log-output-format-per-args.go -log-timestamps
+Sun May 12 09:39:08 CEST 2019 |  INFO | startup
+Sun May 12 09:39:08 CEST 2019 | DEBUG | level changed
+Sun May 12 09:39:08 CEST 2019 |  INFO | 2 + 2 = 4
+
+================================================================================
+j@main:~ ⟩ go run examples/log-output-format-per-args.go -log-location
+ INFO | log-output-format-per-args:40  | startup
+DEBUG | log-output-format-per-args:43  | level changed
+ INFO | log-output-format-per-args:44  | 2 + 2 = 4
+
+================================================================================
+j@main:~ ⟩ go run examples/log-output-format-per-args.go -log-timestamps -log-location
+Sun May 12 09:39:09 CEST 2019 |  INFO | log-output-format-per-args:40  | startup
+Sun May 12 09:39:09 CEST 2019 | DEBUG | log-output-format-per-args:43  | level changed
+Sun May 12 09:39:09 CEST 2019 |  INFO | log-output-format-per-args:44  | 2 + 2 = 4
+
+#+end_example
+
+
+** Set LogLevel per program arguments
+
+#+BEGIN_SRC go :tangle examples/loglevel-per-args.go :eval no
+  package main
+
+  import "github.com/j-keck/plog"
+  import "flag"
 
   func main() {
       log := plog.NewDefaultConsoleLogger()
@@ -279,32 +380,33 @@ All other formatters expects a ~%s~ where the value should be inserted.
 #+END_SRC
 
 
-#+BEGIN_SRC shell :results output :exports both
-run() { echo $(repeat 80 printf -); echo $@; $@; echo;}
+#+BEGIN_SRC shell :results output :exports results
+run() { echo $(printf "=%.0s" {1..80}); echo "j@main:~ ⟩ $@"; $@; echo;}
 
-run go run examples/flag.go
-run go run examples/flag.go -v
-run go run examples/flag.go -vv
+run go run examples/loglevel-per-args.go
+run go run examples/loglevel-per-args.go -v
+run go run examples/loglevel-per-args.go -vv
 #+END_SRC
 
 #+RESULTS:
 #+begin_example
+================================================================================
+j@main:~ ⟩ go run examples/loglevel-per-args.go
+Sun May 12 09:39:09 CEST 2019 |  INFO | info
 
-go run examples/flag.go
-Sat May 11 19:01:24 CEST 2019 |  INFO | info
+================================================================================
+j@main:~ ⟩ go run examples/loglevel-per-args.go -v
+Sun May 12 09:39:10 CEST 2019 |  INFO | info
+Sun May 12 09:39:10 CEST 2019 | DEBUG | debug
 
-
-go run examples/flag.go -v
-Sat May 11 19:01:25 CEST 2019 |  INFO | info
-Sat May 11 19:01:25 CEST 2019 | DEBUG | debug
-
-
-go run examples/flag.go -vv
-Sat May 11 19:01:25 CEST 2019 |  INFO | info
-Sat May 11 19:01:25 CEST 2019 | DEBUG | debug
-Sat May 11 19:01:25 CEST 2019 | TRACE | trace
+================================================================================
+j@main:~ ⟩ go run examples/loglevel-per-args.go -vv
+Sun May 12 09:39:10 CEST 2019 |  INFO | info
+Sun May 12 09:39:10 CEST 2019 | DEBUG | debug
+Sun May 12 09:39:10 CEST 2019 | TRACE | trace
 
 #+end_example
+
 
 
 ** Log over a go channel
@@ -380,12 +482,12 @@ go run examples/broadcast.go
 #+END_SRC
 
 #+RESULTS:
-: Sat May 11 19:01:27 CEST 2019 |  INFO | startup
-: Sat May 11 19:01:27 CEST 2019 |  INFO | startup
-: Sat May 11 19:01:27 CEST 2019 |  INFO | startup
-: Sat May 11 19:01:27 CEST 2019 | DEBUG | level changed
-: Sat May 11 19:01:27 CEST 2019 | DEBUG | level changed
-: Sat May 11 19:01:27 CEST 2019 | DEBUG | level changed
-: Sat May 11 19:01:27 CEST 2019 |  INFO | 2 + 2 = 4
-: Sat May 11 19:01:27 CEST 2019 |  INFO | 2 + 2 = 4
-: Sat May 11 19:01:27 CEST 2019 |  INFO | 2 + 2 = 4
+: Sun May 12 09:39:11 CEST 2019 |  INFO | startup
+: Sun May 12 09:39:11 CEST 2019 |  INFO | startup
+: Sun May 12 09:39:11 CEST 2019 |  INFO | startup
+: Sun May 12 09:39:11 CEST 2019 | DEBUG | level changed
+: Sun May 12 09:39:11 CEST 2019 | DEBUG | level changed
+: Sun May 12 09:39:11 CEST 2019 | DEBUG | level changed
+: Sun May 12 09:39:11 CEST 2019 |  INFO | 2 + 2 = 4
+: Sun May 12 09:39:11 CEST 2019 |  INFO | 2 + 2 = 4
+: Sun May 12 09:39:11 CEST 2019 |  INFO | 2 + 2 = 4

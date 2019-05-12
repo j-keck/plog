@@ -49,6 +49,27 @@ func TestFormatter(t *testing.T) {
 			t.Errorf("expected != actual\n exp: '%s'\n act: '%s'", test.expected, actual)
 		}
 	}
+}
 
+func TestAddLogFormatter(t *testing.T) {
+	check := func(expected, actual string) {
+		if expected != actual {
+			t.Errorf("expected != actual\n exp: '%s'\n act: '%s'", expected, actual)
+		}
+	}
+
+	fmt := NewLogFormatter("|")
+
+	msg := LogMessage{Info, time.Unix(0, 0), "filename", 33, "Test"}
+	check("", fmt.Format(msg))
+
+	fmt.AddLogFormatter(LevelFmt("%s"))
+	check("INFO", fmt.Format(msg))
+
+	fmt.AddLogFormatter(MessageFmt("%s"))
+	check("INFO|Test", fmt.Format(msg))
+
+	fmt.AddLogFormatter(FileFmt("%s"))
+	check("INFO|Test|filename", fmt.Format(msg))
 }
 
