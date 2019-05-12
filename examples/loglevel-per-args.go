@@ -4,7 +4,6 @@ package main
 import "github.com/j-keck/plog"
 import "flag"
 
-
 func main() {
     log := plog.NewDefaultConsoleLogger()
 
