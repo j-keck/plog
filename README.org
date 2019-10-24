@@ -25,6 +25,9 @@ pico log - because it's so small and has zero dependencies.
 
   - log over go channel
 
+  - optional global logger instance
+    (see [[#create-a-global-logger-instance][Create a global logger instance]])
+
   - log output format configurable \\
     (see [[#custom-log-format][Custom log format]], [[#log-output-format-per-program-arguments][Log output format per program arguments]] for examples)
 
@@ -104,6 +107,39 @@ and how this columns are formatted (see [[#formatters][Formatters]] for more inf
   : [DEBUG - May 12 09:39:07.068 - level changed]
   : [ INFO - May 12 09:39:07.069 - 2 + 2 = 4]
 
+** Create a global logger instance
+
+You create a singleton global logger instance per ~plog.GlobalLogger~.
+When you create a global logger, you *must* attach a console or stream logger to it.
+If not, nothing are logged. ~plog.GlobalLogger~ is a broadcast logger, so
+you can add many consumer.
+
+#+BEGIN_SRC go :tangle examples/global-logger.go :eval no
+package main
+
+import "github.com/j-keck/plog"
+
+func main() {
+  // initialize the logger
+  log := plog.GlobalLogger().Add(plog.NewDefaultConsoleLogger())
+  log.Info("in 'main'")
+
+  other()
+}
+
+func other() {
+  log := plog.GlobalLogger()
+  log.Info("in 'other'")
+}
+#+END_SRC
+
+#+BEGIN_SRC shell :results output :exports both
+go run examples/global-logger.go
+#+END_SRC
+
+#+RESULTS:
+: Thu Oct 24 06:47:36 CEST 2019 |  INFO | in 'main'
+: Thu Oct 24 06:47:36 CEST 2019 |  INFO | in 'other'
 
 
 * API
