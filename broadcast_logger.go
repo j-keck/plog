@@ -24,8 +24,9 @@ func (self *broadcastLogger) SetLevel(level LogLevel) {
 	}
 }
 
-func (self *broadcastLogger) Add(other Logger) {
+func (self *broadcastLogger) Add(other Logger) *broadcastLogger {
 	self.receiver = append(self.receiver, other)
+	return self
 }
 
 
