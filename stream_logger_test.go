@@ -1,10 +1,13 @@
 package plog
 
-import "testing"
-import "strings"
-import "io/ioutil"
-import "time"
-import "bytes"
+import (
+	"testing"
+	"strings"
+	"io/ioutil"
+	"time"
+	"bytes"
+	"sync/atomic"
+)
 
 
 func TestOneSubscriber(t *testing.T) {
@@ -63,17 +66,17 @@ func TestWaitForSubscribers(t *testing.T) {
 	sub := log.Subscribe(1)
 	log.Info("test message")
 
-	msgReceived := false
+	var counter int32
 	go func() {
 		log.WaitForSubscribers(5 * time.Second)
-		if !msgReceived {
+		if atomic.LoadInt32(&counter) == 0 {
 			t.Error("message not received")
 		}
 	}()
 
 	time.Sleep(500 * time.Millisecond)
 	<-sub
-	msgReceived = true
+	atomic.AddInt32(&counter, 1)
 }
 
 func TestWaitForSubscribersShouldTimeout(t *testing.T) {
