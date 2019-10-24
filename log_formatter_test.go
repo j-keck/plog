@@ -1,8 +1,15 @@
 package plog
 
-import "testing"
-import "time"
+import (
+	"testing"
+	"time"
+	"os"
+)
 
+func init() {
+	// set timezone to 'UTC' for deterministic tests.
+	os.Setenv("TZ", "UTC")
+}
 
 func TestLogFormatter(t *testing.T) {
 	fmt := NewLogFormatter(" | ",
@@ -12,13 +19,12 @@ func TestLogFormatter(t *testing.T) {
 		Message)
 	fmt.SetLogPrefix("[").SetLogSuffix("]")
 
-	expected := "[ INFO | Thu Jan  1 01:00:00 CET 1970 |        filename:33  | Test]"
+	expected := "[ INFO | Thu Jan  1 00:00:00 UTC 1970 |        filename:33  | Test]"
 	actual := fmt.Format(LogMessage{Info, time.Unix(0, 0), "filename", 33, "Test"})
 	if expected != actual {
 		t.Errorf("expected != actual\n exp: '%s'\n act: '%s'", expected, actual)
 	}
 }
-
 
 func TestFormatter(t *testing.T) {
 	type test struct {
@@ -28,18 +34,18 @@ func TestFormatter(t *testing.T) {
 
 	tests := []test{
 		// provided
-		test{ Level, " INFO"},
-		test{ Timestamp, "Jan  1 01:00:00" },
-		test{ TimestampMillis, "Jan  1 01:00:00.000" },
-		test{ TimestampUnixDate, "Thu Jan  1 01:00:00 CET 1970" },
-		test{ File, "       filename" },
-		test{ Line, "33 " },
-		test{ Location, "       filename:33 "},
-		test{ Message, "Test" },
+		test{Level, " INFO"},
+		test{Timestamp, "Jan  1 00:00:00"},
+		test{TimestampMillis, "Jan  1 00:00:00.000"},
+		test{TimestampUnixDate, "Thu Jan  1 00:00:00 UTC 1970"},
+		test{File, "       filename"},
+		test{Line, "33 "},
+		test{Location, "       filename:33 "},
+		test{Message, "Test"},
 
 		// custom
-		test{ LevelFmt("(%s)"), "(INFO)" },
-		test{ MessageFmt("msg: %s"), "msg: Test" },
+		test{LevelFmt("(%s)"), "(INFO)"},
+		test{MessageFmt("msg: %s"), "msg: Test"},
 	}
 
 	msg := LogMessage{Info, time.Unix(0, 0), "filename", 33, "Test"}
@@ -72,4 +78,3 @@ func TestAddLogFormatter(t *testing.T) {
 	fmt.AddLogFormatter(FileFmt("%s"))
 	check("INFO|Test|filename", fmt.Format(msg))
 }
-
