@@ -147,6 +147,11 @@ go run examples/global-logger.go
 Each logger instance have the following functions:
 
   | ~SetLevel(LogLevel)~                               | Set the log level. From ~plog.Trace~ to ~plog.Error~ |
+  | ~IsTraceEnabled()~                                 | Checks if the Trace level is enabled                 |
+  | ~IsDebugEnabled()~                                 | Checks if the Debug level is enabled                 |
+  | ~IsInfoEnabled()~                                  | Checks if the Info level is enabled                  |
+  | ~IsWarnEnabled()~                                  | Checks if the Warn level is enabled                  |
+  | ~IsErrorEnabled()~                                 | Checks if the Error level is enabled                 |
   | ~Trace(string)~ / ~Tracef(string, ...{}interface)~ | Trace logging                                        |
   | ~Debug(string)~ / ~Debugf(string, ...{}interface)~ | Debug logging                                        |
   | ~Info(string)~ / ~Infof(string, ...{}interface)~   | Info logging                                         |

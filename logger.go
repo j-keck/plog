@@ -19,10 +19,27 @@ type logImpl interface {
 	log(LogMessage)
 }
 
-
+// log level functions
 func (self *logger) SetLevel(level LogLevel) {
 	self.level = level
 }
+func (self *logger) IsTraceEnabled() bool {
+	return self.level <= Trace
+}
+func (self *logger) IsDebugEnabled() bool {
+	return self.level <= Debug
+}
+func (self *logger) IsInfoEnabled() bool {
+	return self.level <= Info
+}
+func (self *logger) IsWarnEnabled() bool {
+	return self.level <= Warn
+}
+func (self *logger) IsErrorEnabled() bool {
+	return self.level <= Error
+}
+
+// logging functions
 func (self *logger) Trace(xs ...interface{}) {
 	self.log(newLogMessage(Trace, strings.Trim(fmt.Sprintln(xs...), "\n")))
 }
