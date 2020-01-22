@@ -32,6 +32,9 @@ func (self *logger) IsDebugEnabled() bool {
 func (self *logger) IsInfoEnabled() bool {
 	return self.level <= Info
 }
+func (self *logger) IsNoteEnabled() bool {
+	return self.level <= Note
+}
 func (self *logger) IsWarnEnabled() bool {
 	return self.level <= Warn
 }
@@ -57,6 +60,12 @@ func (self *logger) Info(xs ...interface{}) {
 }
 func (self *logger) Infof(format string, xs ...interface{}) {
 	self.log(newLogMessage(Info, fmt.Sprintf(format, xs...)))
+}
+func (self *logger) Note(xs ...interface{}) {
+	self.log(newLogMessage(Note, strings.Trim(fmt.Sprintln(xs...), "\n")))
+}
+func (self *logger) Notef(format string, xs ...interface{}) {
+	self.log(newLogMessage(Note, fmt.Sprintf(format, xs...)))
 }
 func (self *logger) Warn(xs ...interface{}) {
 	self.log(newLogMessage(Warn, strings.Trim(fmt.Sprintln(xs...), "\n")))

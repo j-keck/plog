@@ -25,6 +25,20 @@ func TestCheckLevel(t *testing.T) {
 		log.IsWarnEnabled()) {
 		t.Error("warn was not enabled")
 	}
+	if log.IsNoteEnabled() ||
+		log.IsInfoEnabled() ||
+		log.IsDebugEnabled() ||
+		log.IsTraceEnabled() {
+		t.Error("wrong level active")
+	}
+
+	// note
+	log.SetLevel(Note)
+	if !(log.IsErrorEnabled() &&
+		log.IsWarnEnabled() &&
+		log.IsNoteEnabled()) {
+		t.Error("note was not enabled")
+	}
 	if log.IsInfoEnabled() ||
 		log.IsDebugEnabled() ||
 		log.IsTraceEnabled() {

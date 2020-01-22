@@ -6,6 +6,7 @@ const (
 	Trace LogLevel = iota
 	Debug
 	Info
+	Note
 	Warn
 	Error
 	Fatal
@@ -19,6 +20,8 @@ func (l LogLevel) String() string {
 		return "DEBUG"
 	case Info:
 		return "INFO"
+	case Note:
+		return "NOTE"
 	case Warn:
 		return "WARN"
 	case Error:
