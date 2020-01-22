@@ -1,6 +1,10 @@
 #+TITLE: plog (pico log) - golang logging library
 #+PROPERTY: header-args :eval never-export
 
+[[https://pkg.go.dev/github.com/j-keck/plog][file:https://godoc.org/github.com/j-keck/plog?status.svg]]
+[[https://github.com/j-keck/plog/actions][file:https://github.com/j-keck/plog/workflows/test/badge.svg]]
+
+
 * Intro
 
 pico log - because it's so small and has zero dependencies.
