@@ -22,7 +22,6 @@ pico log - because it's so small and has zero dependencies.
  - blazing fast
  - a lot of features
 
-
 ** Features
 
   - console logging
@@ -69,9 +68,9 @@ and the log message.
 #+END_SRC
 
 #+RESULTS:
-: Sun May 12 09:39:06 CEST 2019 |  INFO | startup
-: Sun May 12 09:39:06 CEST 2019 | DEBUG | level changed
-: Sun May 12 09:39:06 CEST 2019 |  INFO | 2 + 2 = 4
+: Wed Feb 12 13:50:26 CET 2020 |  INFO | startup
+: Wed Feb 12 13:50:26 CET 2020 | DEBUG | level changed
+: Wed Feb 12 13:50:26 CET 2020 |  INFO | 2 + 2 = 4
 
 
 *** ~plog.NewConsoleLogger(separator string, formatters ...plog.Formatter)~
@@ -107,16 +106,20 @@ and how this columns are formatted (see [[#formatters][Formatters]] for more inf
   #+END_SRC
 
   #+RESULTS:
-  : [ INFO - May 12 09:39:07.068 - startup]
-  : [DEBUG - May 12 09:39:07.068 - level changed]
-  : [ INFO - May 12 09:39:07.069 - 2 + 2 = 4]
+  : [ INFO - Feb 12 13:50:26.652 - startup]
+  : [DEBUG - Feb 12 13:50:26.653 - level changed]
+  : [ INFO - Feb 12 13:50:26.653 - 2 + 2 = 4]
 
 ** Create a global logger instance
 
 You create a singleton global logger instance per ~plog.GlobalLogger~.
+So you can configure the log output only once, and every other ~plog.GlobalLogger~
+instance have the same logging configuration.
+
 When you create a global logger, you *must* attach a console or stream logger to it.
-If not, nothing are logged. ~plog.GlobalLogger~ is a broadcast logger, so
-you can add many consumer.
+If not, a warning is logged (this can be disabled with ~plog.DropUnhandledMessages~).
+
+~plog.GlobalLogger~ is a broadcast logger, so you can add many consumer.
 
 #+BEGIN_SRC go :tangle examples/global-logger.go :eval no
 package main
@@ -142,8 +145,8 @@ go run examples/global-logger.go
 #+END_SRC
 
 #+RESULTS:
-: Thu Oct 24 06:47:36 CEST 2019 |  INFO | in 'main'
-: Thu Oct 24 06:47:36 CEST 2019 |  INFO | in 'other'
+: Wed Feb 12 13:50:27 CET 2020 |  INFO | in 'main'
+: Wed Feb 12 13:50:27 CET 2020 |  INFO | in 'other'
 
 
 * API
@@ -228,9 +231,9 @@ The ~streamLogger~ has the following additional functions:
   formatter                                      | example output
   --------------------------------------------------------------------------------
   plog.Level                                     | ' INFO'
-  plog.Timestamp                                 | 'May 12 09:39:07'
-  plog.TimestampMillis                           | 'May 12 09:39:07.450'
-  plog.TimestampUnixDate                         | 'Sun May 12 09:39:07 CEST 2019'
+  plog.Timestamp                                 | 'Feb 12 13:50:27'
+  plog.TimestampMillis                           | 'Feb 12 13:50:27.485'
+  plog.TimestampUnixDate                         | 'Wed Feb 12 13:50:27 CET 2020'
   plog.Location                                  | '     go_srcfile:33 '
   plog.File                                      | '     go_srcfile'
   plog.Line                                      | '33 '
@@ -269,8 +272,8 @@ All other formatters expects a ~%s~ where the value should be inserted.
   : formatter examples                             | example output
   : --------------------------------------------------------------------------------
   : plog.LevelFmt("%10s")                          | '(      INFO)'
-  : plog.TimestampFmt("15:04:05.000")              | '09:39:07.822'
-  : plog.TimestampFmt("2006-01-02T15:04:05Z07:00") | '2019-05-12T09:39:07+02:00'
+  : plog.TimestampFmt("15:04:05.000")              | '13:50:27.893'
+  : plog.TimestampFmt("2006-01-02T15:04:05Z07:00") | '2020-02-12T13:50:27+01:00'
   : plog.LocationFmt("[file: %s, line: %d]")       | '[file: go_srcfile, line: 33]'
   : plog.FileFmt("<%s>")                           | '<go_srcfile>'
   : plog.LineFmt("[%d]")                           | '[33]'
@@ -309,9 +312,9 @@ All other formatters expects a ~%s~ where the value should be inserted.
   #+END_SRC
 
   #+RESULTS:
-  : [(INFO ) - 2019-05-12T09:39:08+02:00 - startup              - logformat[16]]
-  : [(DEBUG) - 2019-05-12T09:39:08+02:00 - level changed        - logformat[19]]
-  : [(INFO ) - 2019-05-12T09:39:08+02:00 - 2 + 2 = 4            - logformat[20]]
+  : [(INFO ) - 2020-02-12T13:50:28+01:00 - startup              - logformat[16]]
+  : [(DEBUG) - 2020-02-12T13:50:28+01:00 - level changed        - logformat[19]]
+  : [(INFO ) - 2020-02-12T13:50:28+01:00 - 2 + 2 = 4            - logformat[20]]
 
 
 
@@ -383,9 +386,9 @@ DEBUG | level changed
 
 ================================================================================
 j@main:~ ⟩ go run examples/log-output-format-per-args.go -log-timestamps
-Sun May 12 09:39:08 CEST 2019 |  INFO | startup
-Sun May 12 09:39:08 CEST 2019 | DEBUG | level changed
-Sun May 12 09:39:08 CEST 2019 |  INFO | 2 + 2 = 4
+Wed Feb 12 13:50:29 CET 2020 |  INFO | startup
+Wed Feb 12 13:50:29 CET 2020 | DEBUG | level changed
+Wed Feb 12 13:50:29 CET 2020 |  INFO | 2 + 2 = 4
 
 ================================================================================
 j@main:~ ⟩ go run examples/log-output-format-per-args.go -log-location
@@ -395,9 +398,9 @@ DEBUG | log-output-format-per-args:43  | level changed
 
 ================================================================================
 j@main:~ ⟩ go run examples/log-output-format-per-args.go -log-timestamps -log-location
-Sun May 12 09:39:09 CEST 2019 |  INFO | log-output-format-per-args:40  | startup
-Sun May 12 09:39:09 CEST 2019 | DEBUG | log-output-format-per-args:43  | level changed
-Sun May 12 09:39:09 CEST 2019 |  INFO | log-output-format-per-args:44  | 2 + 2 = 4
+Wed Feb 12 13:50:29 CET 2020 |  INFO | log-output-format-per-args:40  | startup
+Wed Feb 12 13:50:29 CET 2020 | DEBUG | log-output-format-per-args:43  | level changed
+Wed Feb 12 13:50:29 CET 2020 |  INFO | log-output-format-per-args:44  | 2 + 2 = 4
 
 #+end_example
 
@@ -439,18 +442,18 @@ run go run examples/loglevel-per-args.go -vv
 #+begin_example
 ================================================================================
 j@main:~ ⟩ go run examples/loglevel-per-args.go
-Sun May 12 09:39:09 CEST 2019 |  INFO | info
+Wed Feb 12 13:50:30 CET 2020 |  INFO | info
 
 ================================================================================
 j@main:~ ⟩ go run examples/loglevel-per-args.go -v
-Sun May 12 09:39:10 CEST 2019 |  INFO | info
-Sun May 12 09:39:10 CEST 2019 | DEBUG | debug
+Wed Feb 12 13:50:30 CET 2020 |  INFO | info
+Wed Feb 12 13:50:30 CET 2020 | DEBUG | debug
 
 ================================================================================
 j@main:~ ⟩ go run examples/loglevel-per-args.go -vv
-Sun May 12 09:39:10 CEST 2019 |  INFO | info
-Sun May 12 09:39:10 CEST 2019 | DEBUG | debug
-Sun May 12 09:39:10 CEST 2019 | TRACE | trace
+Wed Feb 12 13:50:30 CET 2020 |  INFO | info
+Wed Feb 12 13:50:30 CET 2020 | DEBUG | debug
+Wed Feb 12 13:50:30 CET 2020 | TRACE | trace
 
 #+end_example
 
@@ -529,12 +532,12 @@ go run examples/broadcast.go
 #+END_SRC
 
 #+RESULTS:
-: Sun May 12 09:39:11 CEST 2019 |  INFO | startup
-: Sun May 12 09:39:11 CEST 2019 |  INFO | startup
-: Sun May 12 09:39:11 CEST 2019 |  INFO | startup
-: Sun May 12 09:39:11 CEST 2019 | DEBUG | level changed
-: Sun May 12 09:39:11 CEST 2019 | DEBUG | level changed
-: Sun May 12 09:39:11 CEST 2019 | DEBUG | level changed
-: Sun May 12 09:39:11 CEST 2019 |  INFO | 2 + 2 = 4
-: Sun May 12 09:39:11 CEST 2019 |  INFO | 2 + 2 = 4
-: Sun May 12 09:39:11 CEST 2019 |  INFO | 2 + 2 = 4
+: Wed Feb 12 13:50:31 CET 2020 |  INFO | startup
+: Wed Feb 12 13:50:31 CET 2020 |  INFO | startup
+: Wed Feb 12 13:50:31 CET 2020 |  INFO | startup
+: Wed Feb 12 13:50:31 CET 2020 | DEBUG | level changed
+: Wed Feb 12 13:50:31 CET 2020 | DEBUG | level changed
+: Wed Feb 12 13:50:31 CET 2020 | DEBUG | level changed
+: Wed Feb 12 13:50:31 CET 2020 |  INFO | 2 + 2 = 4
+: Wed Feb 12 13:50:31 CET 2020 |  INFO | 2 + 2 = 4
+: Wed Feb 12 13:50:31 CET 2020 |  INFO | 2 + 2 = 4

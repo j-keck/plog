@@ -15,6 +15,7 @@ func TestGlobalLoggerIsAsSingleton(t *testing.T) {
 
 
 func TestGlobalLogger(t *testing.T) {
+	DropUnhandledMessages()
 	l1 := GlobalLogger()
 	l2 := GlobalLogger()
 

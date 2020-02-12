@@ -1,5 +1,10 @@
 package plog
 
+import (
+	"os"
+	"fmt"
+)
+
 type broadcastLogger struct {
 	receiver []Logger
 	logger
@@ -31,6 +36,10 @@ func (self *broadcastLogger) Add(other Logger) *broadcastLogger {
 
 
 func (self *broadcastLogger) log(msg LogMessage) {
+	if !dropUnhandledMessages && len(self.receiver) == 0 {
+		fmt.Fprintf(os.Stderr, "WARNING - unhandled message: %s\n", msg.Message)
+	}
+
 	for _, logger := range self.receiver {
 		logger.(logImpl).log(msg)
 	}

@@ -65,6 +65,21 @@ Output:
 */
 package plog
 
+var dropUnhandledMessages bool = false
+
+// Disables the logging of unhandled messages.
+//
+// If you use a `BroadcastLogger` or a `GlobalLogger`
+// without a attached logger, the log-messages were
+// unhandled and plog will log a warning about this.
+//
+// Call `plog.DropUnhandledMessages()` to disable
+// the warnings.
+func DropUnhandledMessages() {
+	dropUnhandledMessages = true
+}
+
+
 // Every `Logger' implements this interface.
 //
 // This are the basic functions every logger implements.
