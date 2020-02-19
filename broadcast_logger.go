@@ -34,6 +34,12 @@ func (self *broadcastLogger) Add(other Logger) *broadcastLogger {
 	return self
 }
 
+// Reset removes all attached logger instances
+func (self *broadcastLogger) Reset() *broadcastLogger {
+	self.receiver = make([]Logger, 0)
+	return self
+}
+
 
 func (self *broadcastLogger) log(msg LogMessage) {
 	if !dropUnhandledMessages && len(self.receiver) == 0 {
